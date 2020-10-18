@@ -1,0 +1,286 @@
+version: 2.0
+
+aliases:
+  # Workspace
+  - &workspace
+    ~/video-quickstart-android
+
+  - &gradle-cache-key
+    key: jars-{{ checksum "build.gradle" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+  - &restore-cache-gradle
+    <<: *gradle-cache-key
+    name: Restore Gradle Cache
+  - &save-cache-gradle
+    <<: *gradle-cache-key
+    name: Save Gradle Cache
+    paths:
+      - ~/.gradle/caches
+      - ~/.gradle/wrapper
+
+  # Containers
+  - &build-defaults
+    working_directory: *workspace
+    docker:
+      - image: circleci/android:api-30-node@sha256:a8d15723766a8f32f1a4ead42c5441bb0ded2e832329291cb4bbd9f1d1557721
+    environment:
+      - _JAVA_OPTIONS: "-XX:+UnlockExperimentalVMOptions -Xmx3g"
+
+  - &configure-gradle
+    name: Configure Gradle
+    command: |
+      mkdir -p ~/.gradle
+      echo "org.gradle.jvmargs=-Xmx4608m" >> ~/.gradle/gradle.properties
+
+jobs:
+  setup-workspace:
+    <<: *build-defaults
+    resource_class: medium+
+    steps:
+      # Setup code and workspace for downstream jobs
+      - checkout
+      - restore-cache: *restore-cache-gradle
+      
+      # Save cache
+      - save-cache: *save-cache-gradle
+
+  lint:
+    <<: *build-defaults
+    resource_class: large
+    steps:
+      # Setup
+      - checkout
+      - attach_workspace:
+          at: *workspace
+      - restore-cache: *restore-cache-gradle
+
+      - run:
+          name: Lint
+          command: ./gradlew -q lint
+
+      - store_artifacts:
+          path: exampleAdvancedCameraCapturer/build/reports/lint-results.html
+          prefix: exampleAdvancedCameraCapturer
+      - store_artifacts:
+          path: exampleAudioSink/app/build/reports/lint-results.html
+          prefix: exampleAudioSink
+      - store_artifacts:
+          path: exampleCustomVideoCapturer/build/reports/lint-results.html
+          prefix: exampleCustomVideoCapturer
+      - store_artifacts:
+          path: exampleCustomVideoRenderer/build/reports/lint-results.html
+          prefix: exampleCustomVideoRenderer
+      - store_artifacts:
+          path: exampleDataTrack/build/reports/lint-results.html
+          prefix: exampleDataTrack
+      - store_artifacts:
+          path: exampleScreenCapturer/build/reports/lint-results.html
+          prefix: exampleScreenCapturer
+      - store_artifacts:
+          path: exampleVideoInvite/build/reports/lint-results.html
+          prefix: exampleVideoInvite
+      - store_artifacts:
+          path: quickstart/build/reports/lint-results.html
+          prefix: quickstart
+      - store_artifacts:
+          path: quickstartKotlin/build/reports/lint-results.html
+          prefix: quickstartKotlin
+      - store_artifacts:
+          path: exampleCustomAudioDevice/app/build/reports/lint-results.html
+          prefix: exampleCustomAudioDevice
+
+      # Save cache
+      - save-cache: *save-cache-gradle
+
+  build-exampleAdvancedCameraCapturer:
+    <<: *build-defaults
+    resource_class: large
+    steps:
+      - checkout
+      - attach_workspace:
+          at: *workspace
+      - restore-cache: *restore-cache-gradle
+      - run: *configure-gradle
+      - run:
+          name: Build exampleAdvancedCameraCapturer
+          command: ./gradlew -q exampleAdvancedCameraCapturer:assemble
+      - save-cache: *save-cache-gradle
+
+  build-exampleCustomVideoCapturer:
+    <<: *build-defaults
+    resource_class: large
+    steps:
+      - checkout
+      - attach_workspace:
+          at: *workspace
+      - restore-cache: *restore-cache-gradle
+      - run: *configure-gradle
+      - run:
+          name: Build exampleCustomVideoCapturer
+          command: ./gradlew -q exampleCustomVideoCapturer:assemble
+      - save-cache: *save-cache-gradle
+
+
+  build-exampleCustomVideoRenderer:
+    <<: *build-defaults
+    resource_class: large
+    steps:
+      - checkout
+      - attach_workspace:
+          at: *workspace
+      - restore-cache: *restore-cache-gradle
+      - run: *configure-gradle
+      - run:
+          name: Build exampleCustomVideoRenderer
+          command: ./gradlew -q exampleCustomVideoRenderer:assemble
+
+      # Save cache
+      - save-cache: *save-cache-gradle
+
+  build-exampleDataTrack:
+    <<: *build-defaults
+    resource_class: large
+    steps:
+      - checkout
+      - attach_workspace:
+          at: *workspace
+      - restore-cache: *restore-cache-gradle
+      - run: *configure-gradle
+      - run:
+          name: Build exampleDataTrack
+          command: ./gradlew -q exampleDataTrack:assemble
+      - save-cache: *save-cache-gradle
+
+  build-exampleAudioSink:
+    <<: *build-defaults
+    resource_class: large
+    steps:
+      - checkout
+      - attach_workspace:
+          at: *workspace
+      - restore-cache: *restore-cache-gradle
+      - run: *configure-gradle
+      - run:
+          name: Build exampleDataTrack
+          command: ./gradlew -q exampleAudioSink:assemble
+      - save-cache: *save-cache-gradle
+
+  build-exampleScreenCapturer:
+    <<: *build-defaults
+    resource_class: large
+    steps:
+      - checkout
+      - attach_workspace:
+          at: *workspace
+      - restore-cache: *restore-cache-gradle
+      - run: *configure-gradle
+      - run:
+          name: Build exampleScreenCapturer
+          command: ./gradlew -q exampleScreenCapturer:assemble
+      - save-cache: *save-cache-gradle
+
+  build-exampleVideoInvite:
+    <<: *build-defaults
+    resource_class: large
+    steps:
+      - checkout
+      - attach_workspace:
+          at: *workspace
+      - restore-cache: *restore-cache-gradle
+      - run: *configure-gradle
+      - run:
+          name: Build exampleVideoInvite
+          command: ./gradlew -q exampleVideoInvite:assemble
+
+      # Save cache
+      - save-cache: *save-cache-gradle
+
+  build-quickstart:
+    <<: *build-defaults
+    resource_class: large
+    steps:
+      - checkout
+      - attach_workspace:
+          at: *workspace
+      - restore-cache: *restore-cache-gradle
+      - run: *configure-gradle
+      - run:
+          name: Build quickstart
+          command: ./gradlew -q quickstart:assemble
+      - save-cache: *save-cache-gradle
+
+
+  build-quickstartKotlin:
+    <<: *build-defaults
+    resource_class: large
+    steps:
+      - checkout
+      - attach_workspace:
+          at: *workspace
+      - restore-cache: *restore-cache-gradle
+      - run: *configure-gradle
+      - run:
+          name: Build quickstartKotlin
+          command: ./gradlew -q quickstartKotlin:assemble
+
+      # Save cache
+      - save-cache: *save-cache-gradle
+
+  build-exampleCustomAudioDevice:
+    <<: *build-defaults
+    resource_class: large
+    steps:
+      - checkout
+      - attach_workspace:
+          at: *workspace
+      - restore-cache: *restore-cache-gradle
+      - run: *configure-gradle
+      - run:
+          name: Build exampleDataTrack
+          command: ./gradlew -q exampleCustomAudioDevice:assemble
+      - save-cache: *save-cache-gradle
+
+
+workflows:
+  version: 2
+
+  build:
+    jobs:
+      # Setup
+      - setup-workspace
+
+      # Hygiene
+      - lint:
+          requires:
+            - setup-workspace
+
+      # Build
+      - build-exampleAdvancedCameraCapturer:
+          requires:
+              - setup-workspace
+      - build-exampleCustomVideoCapturer:
+          requires:
+              - setup-workspace
+      - build-exampleCustomVideoRenderer:
+          requires:
+              - setup-workspace
+      - build-exampleDataTrack:
+          requires:
+              - setup-workspace
+      - build-exampleAudioSink:
+          requires:
+              - setup-workspace
+      - build-exampleScreenCapturer:
+          requires:
+              - setup-workspace
+      - build-exampleVideoInvite:
+          requires:
+              - setup-workspace
+      - build-quickstart:
+          requires:
+              - setup-workspace
+      - build-quickstartKotlin:
+          requires:
+              - setup-workspace
+      - build-exampleCustomAudioDevice:
+          requires:
+              - setup-workspace
